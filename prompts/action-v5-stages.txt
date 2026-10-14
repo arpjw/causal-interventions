@@ -1,0 +1,8 @@
+Solve the finite causal prediction task and return the requested numerical stages.
+The three variables are binary. Joint cells follow lexicographic variable order. Each candidate order defines a complete causal DAG: every earlier variable is a parent of every later variable. Its conditional tables come from the common observational joint by the chain rule. An intervention fixes its target and removes that variable's conditional factor. An experiment returns the full assignment, including the fixed target.
+For each candidate world i, compute the held-out query probability q_i and the probability of the specified probe outcome under experiment A, unless these probabilities are already supplied. Update the world prior after the probe outcome. For belief b, query risk is H(sum_i b_i q_i) minus sum_i b_i H(q_i), with H(p) = -p ln(p) - (1-p) ln(1-p). For each action, average the posterior query risk over all possible experimental outcomes using their prior predictive probabilities. Lower action risk is better.
+If intermediate_distributions are supplied, they contain exact public-input query probabilities and all action-outcome likelihoods. They do not contain posterior probabilities or action risks. Use them rather than deriving new likelihoods.
+Report only the fields in response_schema. Use finite JSON numbers for probabilities and risks, including if you must estimate. Choose the action ID with the lowest risk you can calculate. STOP retains the initial risk. Return one JSON object and no prose.
+
+PUBLIC_TASK_JSON
+{{PUBLIC_TASK_JSON}}

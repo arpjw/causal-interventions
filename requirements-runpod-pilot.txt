@@ -1,0 +1,5 @@
+# Runpod PyTorch 2.8.0 / CUDA 12.8 image; install in a Python 3.12 venv
+# with --system-site-packages to reuse the image's pinned Torch build.
+vllm==0.10.2
+transformers==4.57.3
+huggingface-hub==0.36.0

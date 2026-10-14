@@ -1,0 +1,32 @@
+{
+  "seed": 271828,
+  "coefficient_bound": 0.6,
+  "min_cell": 0.002,
+  "max_attempts_per_stratum": 10000,
+  "strata": [
+    {
+      "name": "informative",
+      "candidate_count": 3,
+      "budget": 1,
+      "min_query_range": 0.02,
+      "max_query_range": 1.0,
+      "min_action_gap": 0.00001,
+      "max_action_gap": 1.0,
+      "min_second_action_gain": 0.000001,
+      "max_initial_risk": 1.0,
+      "min_opportunity_gap": 0.001
+    },
+    {
+      "name": "near_tie",
+      "candidate_count": 3,
+      "budget": 1,
+      "min_query_range": 0.02,
+      "max_query_range": 1.0,
+      "min_action_gap": 0.0,
+      "max_action_gap": 0.00001,
+      "min_second_action_gain": 0.0,
+      "max_initial_risk": 1.0,
+      "min_opportunity_gap": 0.0
+    }
+  ]
+}

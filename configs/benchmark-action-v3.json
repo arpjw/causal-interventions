@@ -1,0 +1,45 @@
+{
+  "seed": 339814,
+  "analysis_version": 3,
+  "coefficient_bound": 1.2,
+  "min_cell": 0.0002,
+  "max_attempts_per_stratum": 30000,
+  "strata": [
+    {
+      "name": "informative_c2_b1",
+      "candidate_count": 2,
+      "budget": 1,
+      "min_query_range": 0.08,
+      "max_query_range": 1.0,
+      "min_action_gap": 0.01,
+      "max_action_gap": 1.0,
+      "min_second_action_gain": 0.0001,
+      "max_initial_risk": 1.0,
+      "min_opportunity_gap": 0.01
+    },
+    {
+      "name": "informative_c3_b1",
+      "candidate_count": 3,
+      "budget": 1,
+      "min_query_range": 0.08,
+      "max_query_range": 1.0,
+      "min_action_gap": 0.01,
+      "max_action_gap": 1.0,
+      "min_second_action_gain": 0.0001,
+      "max_initial_risk": 1.0,
+      "min_opportunity_gap": 0.01
+    },
+    {
+      "name": "near_tie_c2_b1",
+      "candidate_count": 2,
+      "budget": 1,
+      "min_query_range": 0.08,
+      "max_query_range": 1.0,
+      "min_action_gap": 0,
+      "max_action_gap": 0.0001,
+      "min_second_action_gain": 0,
+      "max_initial_risk": 1.0,
+      "min_opportunity_gap": 0
+    }
+  ]
+}

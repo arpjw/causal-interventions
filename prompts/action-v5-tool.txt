@@ -1,0 +1,8 @@
+Choose an experiment for the finite causal prediction task. The public task gives a common observational joint, candidate causal orders, a prior over candidate worlds, three allowed actions, and a held-out interventional query. You may call evaluate_action for an action ID to receive its exact public-input prior-averaged one-step Bayes risk in nats. Lower risk is better. You can make at most three evaluation calls, including repeated calls. You may submit a final action before using all calls. A final answer must be one of A, B, C, or STOP; STOP keeps the initial risk.
+Return one JSON object with operation set to evaluate or final and action_id set to the chosen action. When operation is evaluate, action_id must be A, B, or C. When operation is final, action_id may also be STOP. The tool transcript lists only calls already made. You have {{REMAINING_TOOL_CALLS}} evaluation calls remaining. If this is zero, operation must be final. Return no prose.
+
+PUBLIC_TASK_JSON
+{{PUBLIC_TASK_JSON}}
+
+TOOL_TRANSCRIPT_JSON
+{{TOOL_TRANSCRIPT_JSON}}

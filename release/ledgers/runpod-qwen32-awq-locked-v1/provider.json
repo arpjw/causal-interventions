@@ -1,0 +1,15 @@
+{
+  "pod_id": "thqiu158hfryxj",
+  "gpu": "NVIDIA A40",
+  "gpu_count": 1,
+  "cloud": "SECURE",
+  "data_center": "EU-SE-1",
+  "created_at_utc": "2026-10-13T21:09:35.318Z",
+  "displayed_gpu_hourly_rate_usd": 0.59,
+  "deletion_response_status": 204,
+  "post_deletion_lookup_status": 404,
+  "post_deletion_lookup_at_utc": "2026-10-13T21:58:26Z",
+  "estimated_compute_usd": 0.48,
+  "actual_invoice_status": "not_checked",
+  "note": "Estimate excludes storage and provider billing adjustments. No model weights or credentials are included."
+}

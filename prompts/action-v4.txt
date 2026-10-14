@@ -1,0 +1,8 @@
+Choose one experiment for the finite causal prediction task below.
+The three variables are binary. Joint cells are in lexicographic variable order. Each candidate order defines a complete causal DAG: every earlier variable is a parent of every later variable. Its conditional tables come from the common observational joint by the chain rule. An intervention fixes its target and removes that variable's conditional factor. An experiment returns the full binary assignment, including the fixed target.
+The candidates have the listed prior probabilities. Minimize the expected remaining Bayes risk of the held-out intervention probability after one experiment, averaged over candidate worlds and experimental outcomes. For belief b and query probabilities q_i in the candidate worlds, the query risk is H(sum_i b_i q_i) minus sum_i b_i H(q_i), where H(p) = -p ln(p) - (1-p) ln(1-p). Average this risk over each action's possible experimental outcomes, using their prior predictive probabilities. Lower risk is better. The held-out query intervention is unavailable as an experiment.
+If intermediate_distributions are present, they give public-input probabilities for the query and each action's outcomes in each candidate world. Use them to calculate the expected posterior query risk. If computed_action_values are present, they are the exact expected risks calculated from the public task; choose the lowest.
+Choose from the allowed action IDs. STOP preserves the initial risk. Return exactly one JSON object with the sole key action_id and no explanation.
+
+PUBLIC_TASK_JSON
+{{PUBLIC_TASK_JSON}}
