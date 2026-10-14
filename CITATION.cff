@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use this benchmark, cite the paper and link to the public evidence repository."
+title: "Choosing Experiments for Causal Prediction: An Exact Bayes-Risk Benchmark of Open Language Models"
+type: software
+authors:
+  - family-names: Somu
+    given-names: Arya
+date-released: 2026-10-14
+url: "https://github.com/arpjw/causal-interventions"
+repository-code: "https://github.com/arpjw/causal-interventions"
+abstract: "Finite causal-intervention benchmark, exact Bayes-risk policy, locked model evaluations, and reproducible result ledgers."

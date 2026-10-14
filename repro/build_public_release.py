@@ -76,7 +76,7 @@ def main() -> None:
 
     index = {}
     for path in sorted(RELEASE.rglob("*")):
-        if path.is_file() and path.name != "sha256.json":
+        if path.is_file() and path.name not in {"sha256.json", "README.md", "DATA_LICENSE.md"}:
             index[str(path.relative_to(RELEASE))] = {
                 "bytes": path.stat().st_size,
                 "sha256": sha256(path.read_bytes()).hexdigest(),

@@ -2,6 +2,8 @@
 
 This directory contains the exact locked manifests and model-response ledgers used in the technical paper. The SHA-256 index binds 69 evidence files. Model weights, Hugging Face caches, credentials, and temporary RunPod disks are not included.
 
+The manifests, ledgers, and index are licensed under [CC BY 4.0](DATA_LICENSE.md); archived software retains the repository's [MIT License](../LICENSE). The README and license notices are documentation, not entries in the evidence hash index.
+
 ## Status by version
 
 | Version | Complete locked model tests | Main boundary |
@@ -17,6 +19,10 @@ The v5 development ledgers include both the original 256-token raw-stage pilot a
 ## Verify
 
 From the repository root, these commands use only Python's standard library and the repository code:
+
+    python3 repro/verify_public_release.py --full
+
+This single command checks every indexed file, replays all complete v2-v5 test ledgers, and audits the v3-v5 information identity. To replay one condition instead, use the commands below:
 
     PYTHONPATH=. python3 scripts/verify_action_v4.py release/manifests/action-v4-locked.json release/ledgers/v4-test235-opaque-thinking-batched
     PYTHONPATH=. python3 scripts/verify_action_v5.py release/manifests/action-v5-locked.json release/ledgers/v5-test32-raw

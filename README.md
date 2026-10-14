@@ -1,57 +1,112 @@
-# Causal Interventions
+# Choosing Experiments for Causal Prediction
 
-A controlled study of whether AI agents choose informative experiments and use their results to predict interventions. Locked studies through v4 are complete. A fresh v5 diagnostic evaluated raw numerical stages against an exact-risk calculator agent on 150 cases; its planned 235B confirmatory comparison was stopped before test inference because measured throughput could not fit the project budget.
+**An exact Bayes-risk benchmark of open language models.** This repository asks a narrow question: when several causal worlds fit the same observational data, can a model choose an experiment that improves a specified future intervention prediction? It contains the [five-page paper](paper/main.pdf), [LaTeX source](paper/main.tex), benchmark code, frozen protocols, complete public result ledgers, and CPU-only verification tools. The [research releases](https://github.com/arpjw/causal-interventions/releases) package the paper for download.
 
-## Paper and reproducible release
+The main finding is a bounded negative result. In locked v3 and v4 studies, unaided 32B, 72B, and 235B model conditions did not meet their registered better-than-random experiment-choice rules. A fresh v5 diagnostic found that a 32B agent did better when it could request exact action risks, but its tool use was incomplete. The registered v5 235B thinking-budget comparison was **not run** after a development-only throughput check showed that full coverage could not be budgeted reliably under the final RunPod cap. These synthetic tests do not measure general causal-reasoning ability.
 
-The [technical paper](paper/main.pdf) and its [LaTeX source](paper/main.tex) derive the exact one-step Bayes-risk objective and prove that the expected risk reduction equals the mutual information between an experiment outcome and the held-out query outcome. They report the full v3 and v4 results, the completed v5 32B diagnostic, and the v5 budget stop. The [v5 result report](docs/ACTION_V5_RESULTS.md) gives the detailed receipts and limitations.
+## Start here
 
-The [release index](release/sha256.json) hashes 69 public evidence files: locked manifests, complete test ledgers, development diagnostics, and archived frozen source. Model weights and credentials are not included. Each ledger retains prompts, responses, exact per-case scores, metadata, and a summary. The paper and code are released as a research artifact, without claiming general causal-reasoning performance.
+| Goal | Where to go |
+| --- | --- |
+| Understand the mathematical task and conclusions | [Paper PDF](paper/main.pdf), especially Sections 2, 4, and 5 |
+| See measured results and limitations by study | [v1](docs/QWEN32_LOCKED_RESULTS.md) · [v2](docs/ACTION_V2_RESULTS.md) · [v3](docs/ACTION_V3_RESULTS.md) · [v4](docs/ACTION_V4_RESULTS.md) · [v5](docs/ACTION_V5_RESULTS.md) |
+| Verify saved results on a CPU | [Reproduce the public evidence](#reproduce-the-public-evidence-on-a-cpu) |
+| Find frozen cases and raw model responses | [`release/manifests/`](release/manifests/) and [`release/ledgers/`](release/ledgers/) |
+| Inspect the design and deviations | [`docs/`](docs/), including versioned count rationales and execution amendments |
 
-To verify v5 from the repository root, run scripts/verify_action_v5.py with release/manifests/action-v5-locked.json and each of release/ledgers/v5-test32-raw and release/ledgers/v5-test32-tool. Run repro/check_information_identity.py on any locked v3, v4, or v5 manifest to check the information identity independently. For v4, use scripts/verify_action_v4.py. For v3 across Python runtimes, use scripts/verify_action_v3_portable.py. The public results are historical model responses; rerunning inference requires pinned model snapshots and GPU resources.
+## Research question and exact score
 
-## Research question
+An episode supplies a positive observational joint distribution over three binary variables, two or three candidate causal orders, a prior over the worlds, three allowed interventions, and the held-out query `P(Z=1 | do(X=1))`. Each causal order factorizes the **same** observational joint distribution. Its truncated factorization nevertheless gives different intervention predictions. The agent chooses one experiment from `do(X=0)`, `do(Y=0)`, and `do(Y=1)`; it may also choose `STOP` where the protocol allows it.
 
-When observational data cannot distinguish two causal worlds, does an agent choose interventions that reduce uncertainty about what will happen under a new intervention?
+The exact evaluator enumerates every possible outcome of an action, updates the posterior over candidate worlds, and measures the remaining Bernoulli log-loss risk for the held-out query. If `R_a` is that expected risk and `R_random` is the average over the three allowed experiments, the action-choice contrast is:
 
-The two-variable smoke test contains a pair of causal worlds with the same observational joint distribution. The main benchmark uses three binary variables, candidate causal orders that reproduce the same observational joint exactly, and interventions with different predictive value.
+```text
+model minus random = mean_case(R_chosen - R_random).
+```
 
-## Current implementation
+**Negative values favor the model.** The oracle minimizes risk over the allowed actions and `STOP`; the random-to-oracle gap measures how much room there is to improve. The paper proves that prior query risk minus `R_a` equals the mutual information between the experiment outcome and a future draw from the held-out query, under the stated conditional-independence convention. [`repro/check_information_identity.py`](repro/check_information_identity.py) checks this identity by a separate finite joint-table calculation on all locked v3-v5 test actions.
 
-- Exact three-variable SCM factorization and intervention enumeration (M1).
-- Bayesian belief updates, random and greedy baselines, and an exact finite-horizon query-risk policy (M2).
-- Deterministic development/test episode generation, informative and near-tie strata, rejection accounting, and replay-validated candidate manifests (M3).
-- Development episode runner, strict action and forecast parsing, paired baselines, and optional offline MLX, Transformers, and CUDA vLLM adapters.
+The studies use different primary scores. V1 and v2 score realized forecasts; v3-v5 use prior-averaged exact action risk. Their numerical effect sizes should **not** be pooled or read as one model-size curve.
 
-The tracked [v0 configuration](configs/benchmark-v0.json) is a small budget-one exploratory setting. The [factorial v0 configuration](configs/benchmark-factorial-v0.json) covers candidate counts two, three, and six and budgets one, two, and three. The first factorial test is frozen and complete; see the [32B locked result](docs/QWEN32_LOCKED_RESULTS.md). Local manifests and ledgers under `data/` and `results/` are ignored by Git. See [M1-M3 status](docs/M1_M3_STATUS.md) for implementation and validation history.
+## What the locked studies found
 
-The [v2 action-choice configuration](configs/benchmark-action-v2.json) strengthens the informative action gap and makes the exact Bayesian forecast after model actions the primary score. A budgeted-thinking Qwen3-32B-AWQ condition and a direct-JSON Qwen2.5-72B-Instruct-AWQ condition each completed 150 fresh locked test episodes. Neither showed a resolved improvement over random action choice; both submitted forecast scores were worse than random. See the [v2 locked report](docs/ACTION_V2_RESULTS.md) and [frozen count rationale](docs/test-count-rationale-v2.md). The conditions differ in model family and decoding, so the result does not isolate the effect of model size.
+| Study | Complete test coverage | Registered or principal result | Important boundary |
+| --- | --- | --- | --- |
+| v1 | 360 Qwen3-32B episodes | End-to-end forecast loss minus random: **+0.262067 nats**, 95% interval `[+0.163531, +0.380312]` | Realized random-to-oracle gap was only `0.000567` nats; weak action discrimination. |
+| v2 | 150 cases per 32B and 72B condition | Action-conditioned forecast loss minus random: **+0.019137** (32B) and **+0.009999** (72B) nats; both intervals include zero | Different model families and decoding; realized-outcome score. |
+| v3 | 450 cases per condition, including 300 informative | Unaided 32B, 72B, and 235B each chose `do(Y=0)` on every case; each was optimal on 100/300 informative cases | Exact-risk action score, but semantic action labels were fixed. Two value-assisted controls selected the optimum in 299/300 cases. |
+| v4 | 450 cases per condition, including 300 informative | Registered 235B thinking-model minus random: **+0.001509 nats**, 95% interval `[-0.001350, +0.004370]`; optimal on 102/300 | Randomized action labels. The 32B exact-value selection control was optimal on 300/300, but it was supplied the answer values. |
+| v5 | Two 32B conditions on 150 fresh informative cases | Raw numerical stages: **+0.015592 nats** vs random; exact-risk calculator agent: **-0.009773 nats** vs random. Their descriptive paired difference was **-0.025365 nats**. | The agent queried A then B in every case, never C, yet chose C 102 times. The registered 235B long-versus-short test is unrun. |
 
-The [v3 action-only study](docs/ACTION_V3_RESULTS.md) is complete. It used 300 informative and 150 near-tie locked test episodes, with balanced optimal action labels in each informative stratum. Its primary metric averages exact posterior query risk over possible experiment outcomes. Unaided Qwen2.5 32B, Qwen2.5 72B, and Qwen3 235B MoE all selected `do(Y=0)` in every case and did not beat random under the registered rule. Both Qwen2.5 models nearly matched the exact policy when supplied the public-input action values. The frozen manifest is ignored local data at `data/action-v3-final-locked.json`; its lock hash is `37d3fbd0dd84be40878c244b87f6258dda3358f3af242c18e32702b88909c99d`. See the [prospective rationale](docs/test-count-rationale-v3.md), full ledgers under ignored `results/`, and [report](docs/ACTION_V3_RESULTS.md) for intervals, independent replay, compute, and limits.
+Intervals resample independent benchmark parameter draws while holding the saved model responses fixed. They do not include variation from retraining or repeated decoding. The v5 calculator comparison is descriptive and measures a tool-using system, not unaided numerical causal reasoning. See the linked reports and paper for full condition definitions, intervals, parse failures, pretest amendments, and failure analysis.
 
-The [v4 action-choice study](docs/ACTION_V4_RESULTS.md) is complete. It randomized presented action IDs on a fresh 450-case locked test, compared raw inputs with public likelihoods and exact action values on Qwen2.5-32B, and ran a budgeted Qwen3-235B thinking condition on four H200 GPUs. The 235B condition did not meet the registered better-than-random criterion: model-minus-random risk was +0.001509 nats on 300 informative cases, 95% interval [-0.001350, +0.004370]. Exact action values led the 32B model to select the optimum on all 300 informative cases. All five ledgers passed independent replay; both pods were deleted. The [prospective rationale](docs/test-count-rationale-v4.md), [batch execution amendment](docs/action-v4-batch-amendment.md), and [full report](docs/ACTION_V4_RESULTS.md) state the design, results, spend estimate, and limitations.
+## Reproduce the public evidence on a CPU
 
-The [v5 diagnostic](docs/ACTION_V5_RESULTS.md) used a fresh 150-case lock. The 32B raw numerical-stage condition was worse than random by +0.015592 nats; the exact-risk calculator agent was better by -0.009773 nats. Their descriptive paired difference was -0.025365 nats. The tool agent always queried A then B and usually chose unqueried C, so this is not evidence of complete tool use or unaided calculation. The registered 235B long-versus-short comparison remains untested after a development-only throughput pilot showed the full study would not reliably fit the $30 cap.
-
-See [the engineering plan](docs/ENGINEERING_PLAN.md) for the complete build and validation path, and [the protocol](docs/protocol.md) for the initial study boundaries.
-
-## Local commands
-
-Requires Python 3.10 or newer and no third-party packages:
+These commands work on macOS or Linux with **Python 3.10+** and its standard library. They use the saved model responses and exact finite-table calculations; they do **not** download model weights, require a GPU, call RunPod, or produce new model responses.
 
 ```sh
-python3 -m unittest discover -s tests -v
-python3 -m causal_interventions generate --config configs/benchmark-v0.json --output data/my-candidate.json --development-per-stratum 4 --test-per-stratum 4
+git clone https://github.com/arpjw/causal-interventions.git
+cd causal-interventions
+python3 -m unittest discover -s tests -q
+python3 repro/verify_public_release.py
+python3 repro/verify_public_release.py --full
+```
+
+The first release command checks the SHA-256 digest and byte count of every file in [`release/sha256.json`](release/sha256.json). `--full` additionally extracts the frozen v2 source into a temporary directory, verifies both v2 test ledgers, replays all five v3 and five v4 test conditions, replays both completed v5 test conditions, and checks the query-information identity on the v3-v5 locks. It checks **14 complete v2-v5 model test ledgers** in total. Expect this to take longer than the unit tests on a laptop. It leaves the repository untouched and exits nonzero on a failed check.
+
+The full checker uses [`scripts/verify_action_v3_portable.py`](scripts/verify_action_v3_portable.py) for v3 because floating-point prompt values can differ in their last bits between Python/libm runtimes; nonnumeric prompt content and model responses must still match. The v2 verifier checks hashes against its archived frozen source, so the checker extracts that archive separately. V1's published manifest, ledger, and exact frozen source bundle are hash-checked, and its original independent replay is documented in the [v1 report](docs/QWEN32_LOCKED_RESULTS.md); the current `--full` command does not independently recompute v1's forecast-loss score.
+
+### Inspect or replay one condition
+
+Each `release/ledgers/NAME/` directory contains `metadata.json`, `runs.jsonl`, and `summary.json`. A row in `runs.jsonl` records the public prompt, saved generation or tool transcript, selected action, and exact case scores. Metadata binds the condition and manifest; the summary holds aggregate results. For example:
+
+```sh
+PYTHONPATH=. python3 scripts/verify_action_v5.py \
+  release/manifests/action-v5-locked.json release/ledgers/v5-test32-raw
+PYTHONPATH=. python3 scripts/verify_action_v5.py \
+  release/manifests/action-v5-locked.json release/ledgers/v5-test32-tool
+PYTHONPATH=. python3 scripts/verify_action_v4.py \
+  release/manifests/action-v4-locked.json release/ledgers/v4-test235-opaque-thinking-batched
+PYTHONPATH=. python3 repro/check_information_identity.py \
+  release/manifests/action-v5-locked.json
+```
+
+The `--full` checker runs the analogous commands for every complete v2-v5 test condition. [`release/README.md`](release/README.md) lists the evidence bundle and its boundaries. Development ledgers, including the eight-case v5 235B throughput pilot, are present for provenance but are **not test results**. Test sets are closed: do not tune a new prompt on them and call the resulting score a fresh confirmatory result.
+
+### Rebuild a new local benchmark candidate
+
+The package itself has no required third-party Python dependencies. To explore the implementation without touching the published locks:
+
+```sh
+python3 -m causal_interventions generate \
+  --config configs/benchmark-v0.json --output data/my-candidate.json \
+  --development-per-stratum 4 --test-per-stratum 4
 python3 -m causal_interventions validate data/my-candidate.json
 python3 -m causal_interventions audit data/my-candidate.json
 ```
 
-The `freeze` command requires a written count rationale and records hashes of the source, prompt, and analysis files. Manifest generation uses exclusive file creation and will not overwrite a prior run. `data/`, `results/`, and `artifacts/` are ignored so local runs and provider outputs stay out of Git.
+The v0 file is a small exploratory configuration. [`configs/benchmark-factorial-v0.json`](configs/benchmark-factorial-v0.json) and the v2-v5 configurations document later designs. `data/`, `results/`, and `artifacts/` are Git-ignored local workspaces; public copies of the relevant locked artifacts are under `release/`. Manifest generation uses exclusive creation to avoid silently replacing an earlier candidate. The [engineering plan](docs/ENGINEERING_PLAN.md) and [initial protocol](docs/protocol.md) explain the progression from the M1-M3 exact core to the later model studies.
 
-A RunPod A40 pilot used the pinned [Qwen3-32B-AWQ checkpoint](https://huggingface.co/Qwen/Qwen3-32B-AWQ) with vLLM 0.10.2 and JSON constrained decoding. The 360-episode locked test completed with zero parse failures and a +0.262067-nat paired model-minus-random loss difference, where positive is worse. See the [full result and limitations](docs/QWEN32_LOCKED_RESULTS.md), [test count rationale](docs/test-count-rationale-v1.md), and [CUDA environment pins](requirements-runpod-pilot.txt).
+## Re-running inference with a model
 
-The v2 H100 study used the same pinned CUDA environment. Its primary model-minus-random action-choice differences were +0.019137 nats for 32B and +0.009999 nats for 72B; both 95% intervals crossed zero. The pod was deleted after artifact verification. Public copies of the locked manifests and result ledgers are under release/.
+The CPU replay above verifies the **published observations**. New inference is a separate experiment: it needs the exact model checkpoint revision, inference stack, decoding settings, prompt/source bytes, and enough GPU memory and time. Model weights are not redistributed here. V2-v5 locks carry source and prompt hashes; [`release/frozen-source/`](release/frozen-source/) preserves version-specific source bytes after the working tree evolved. V4's batch execution amendment and v5's pretest 512-token raw-stage amendment are recorded in [`docs/action-v4-batch-amendment.md`](docs/action-v4-batch-amendment.md) and [`docs/action-v5-execution-amendment.md`](docs/action-v5-execution-amendment.md).
 
-For the v2 independent replay, run `python3 scripts/verify_action_v2.py data/action-v2-locked.json results/runpod-action-v2-locked32` and repeat with `results/runpod-action-v2-locked72`. The verifier is a post-lock audit tool; it was not used to select test conditions.
+The recorded CUDA environment used vLLM 0.10.2 and the pins in [`requirements-runpod-pilot.txt`](requirements-runpod-pilot.txt). Each result report names its model snapshot, decoding rule, hardware, and coverage. [`scripts/run_action_v3.py`](scripts/run_action_v3.py), [`scripts/run_action_v4.py`](scripts/run_action_v4.py), and [`scripts/run_action_v5.py`](scripts/run_action_v5.py) are the original runners; [`repro/run_action_v5_amended.py`](repro/run_action_v5_amended.py) is the documented pretest execution amendment. Replaying saved results requires none of these inference dependencies. Rerunning a model may produce different responses even with the recorded seed and should be reported separately from the published ledgers.
 
-For a v3 action-only development run, use `PYTHONPATH=. python3 scripts/run_action_v3.py --manifest data/action-v3-portable-candidate.json --model-snapshot SNAPSHOT --output-dir results/NAME --split development --condition base --max-wall-seconds 600 --max-episodes 24`. Use the locked manifest and `--split test` for a complete frozen test; it refuses an episode limit on test. Run `PYTHONPATH=. python3 scripts/verify_action_v3.py data/action-v3-final-locked.json results/NAME` to replay a completed ledger on the generating runtime, or `PYTHONPATH=. python3 scripts/verify_action_v3_portable.py ...` across Python/libm runtimes. Local v2 source bytes matching its frozen hashes are preserved under ignored `artifacts/action-v2-source/` because the main working tree now contains v3 development.
+## Repository map
+
+| Path | Contents |
+| --- | --- |
+| [`causal_interventions/`](causal_interventions/) | SCM factorization, interventions, beliefs, exact policies, episode generation, prompting, scoring, and adapters |
+| [`configs/`](configs/) and [`prompts/`](prompts/) | Versioned study inputs and frozen prompt text |
+| [`docs/`](docs/) | Protocols, count rationales, results, audits, and amendments |
+| [`paper/`](paper/) | PDF, source, and paper license |
+| [`release/`](release/) | Public locked manifests, model-response ledgers, frozen source archives, SHA-256 index, and data license |
+| [`repro/`](repro/) | One-command release audit, information-identity audit, release builder, and v5 amended runner |
+| [`scripts/`](scripts/) and [`tests/`](tests/) | Study runners, independent verifiers, and unit/integration tests |
+
+## Scope, citation, and licenses
+
+This is a deliberately synthetic three-variable, known-candidate-world benchmark with one query form and one action. Informative cases are selected by a model-free opportunity gate. The studies do not establish real-world causal discovery, general model ability, or an effect of parameter count alone. Negative results and incomplete conditions are retained in the public record.
+
+If you use the result, cite **Arya Somu, “Choosing Experiments for Causal Prediction: An Exact Bayes-Risk Benchmark of Open Language Models,” October 2026**, and link to the [paper](paper/main.pdf) and this repository. Code and frozen software are under the [MIT License](LICENSE). The paper is under [CC BY 4.0](paper/LICENSE.md). Published manifests and ledgers are under [CC BY 4.0](release/DATA_LICENSE.md). Model checkpoints retain their upstream licenses and are not included.
